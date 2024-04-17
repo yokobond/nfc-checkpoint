@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カード読み取りシステム</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <style>
+        .card-read-section {
+            margin-top: 50px;
+        }
+
+        .card-action {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .card-read-instructions {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .button-inactive {
+            opacity: 0.25;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="section">
+        <div class="container">
+            <div class="card-read-section">
+                <div class="card-action has-text-weight-semibold is-size-3">
+                    カードをタッチしてください
+                </div>
+                <div class="field has-addons has-addons-centered">
+                    <p class="control">
+                        <input id="idName" class="input is-medium" type="text" placeholder="name" />
+                    </p>
+                    <button class="button is-primary is-medium button-inactive" id="changeNameButton">名前変更</button>
+                </div>
+                <div class="card-read-instructions">
+                    <button class="button is-primary is-large button-inactive" id="enter">入室</button>
+                    <button class="button is-link is-large button-inactive" id="exit">退室</button>
+                </div>
+                <div class="field has-addons has-addons-centered">
+                    <p class="control">
+                        <a class="button is-success" id="status">
+                            準備完了
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div id="productName"></div>
+            <div id="idm"></div>
+            <div id="recordedData"></div>
+            <a class="button" id="startReadingButton">
+                カード読み込み開始
+            </a>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="table-container">
+            <table class="table is-bordered is-striped is-narrow is-hoverable" id="record">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>ID</th>
+                        <th>名前</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <script>
+        // document.getElementById('enter').addEventListener('click', function () {
+        //     toggleButtonState('enter', 'exit');
+        // });
+
+        // document.getElementById('exit').addEventListener('click', function () {
+        //     toggleButtonState('exit', 'enter');
+        // });
+
+        function toggleButtonState(activeButtonId, inactiveButtonId) {
+            var activeButton = document.getElementById(activeButtonId);
+            var inactiveButton = document.getElementById(inactiveButtonId);
+            if (activeButton.classList.contains('button-inactive')) {
+                activeButton.classList.remove('button-inactive');
+            }
+            if (!inactiveButton.classList.contains('button-inactive')) {
+                inactiveButton.classList.add('button-inactive');
+            }
+        }
+    </script>
+
+    <script>
+        /**
+        * Config data
+        * @type {Object}
+        */
+        const config = (function () {
+            const data = {};
+            const url = new URL(window.location.href);
+            data.apiUrl = url.searchParams.get('apiUrl');
+            return data;
+        })();
+    </script>
+
+    <script type="module">
+        import { Recorder } from './recorder.js';
+        const recorder = new Recorder(config.apiUrl);
+
+        const readSuccessSound = new Audio();
+        readSuccessSound.src = './read-success.wav';
+
+        /**
+         * Format the given date to a string.
+         * @param {Date} date - The date to format.
+         * @returns {string} The formatted date string.
+         */
+        function formatDate(date) {
+            return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)} ${('0' + date.getHours()).slice(-2)}:${('0' + date.getMinutes()).slice(-2)}`;
+        }
+
+        /**
+         * Update the record table with the given data.
+         * @param {Array} data - The data to update the record table with.
+         */
+        async function updateRecordTable() {
+            const recordList = (await recorder.updateRecordList()).toReversed();
+            const nameList = await recorder.getNameList();
+            var table = document.getElementById('record');
+            // Clear the table first
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            // Then add new data
+            for (let i = 0; i < recordList.length; i++) {
+                let row = table.insertRow(-1);
+                let cell;
+                for (let j = 0; j < recordList[i].length; j++) {
+                    cell = row.insertCell(-1);
+                    if (j === 0) {
+                        cell.innerHTML = formatDate(new Date(recordList[i][j]));
+                    } else {
+                        cell.innerHTML = recordList[i][j];
+                    }
+                }
+                cell = row.insertCell(-1);
+                const name = nameList[recordList[i][1]];
+                cell.innerHTML = name ? name : '未登録';
+            }
+        }
+        // Update automatically
+        setInterval(updateRecordTable, 10000);
+        updateRecordTable();
+
+        // Card reader
+        import { openDevice, closeDevice, readIdm } from './pasori.js';
+
+        let nfcReader = null;
+
+        async function startReading() {
+            try {
+                const device = await openDevice();
+                document.getElementById('productName').innerHTML = `カードリーダー: ${device.productName}`;
+                nfcReader = device;
+                document.getElementById('startReadingButton').innerHTML = '読み込み停止';
+                startPolling();
+                document.getElementById('status').innerHTML = '読み込み中...';
+            } catch (error) {
+                document.getElementById('status').innerHTML = error;
+            };
+        }
+
+        /**
+         * Stop reading the card.
+         */
+        async function stopReading() {
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+            }
+            if (nfcReader) {
+                await closeDevice(nfcReader);
+                nfcReader = null;
+            }
+            document.getElementById('startReadingButton').innerHTML = '読み込み開始';
+        }
+
+        let readID;
+
+        /**
+         * Read the IDm from the card.
+         * @returns {Promise} resolved when the reading process is completed.
+         */
+        async function readCard() {
+            if (!nfcReader || !nfcReader.opened) {
+                return;
+            }
+            try {
+                const idm = await readIdm(nfcReader);
+                if (idm === '') {
+                    return;
+                }
+                if (readID === idm) {
+                    return;
+                }
+                readSuccessSound.play();
+                const statusField = document.getElementById('status');
+                const enterButton = document.getElementById('enter');
+                const exitButton = document.getElementById('exit');
+                statusField.innerHTML = `記録中: ${idm}`;
+                statusField.classList.add('is-warning');
+                statusField.classList.remove('is-success');
+                enterButton.classList.add('button-inactive');
+                exitButton.classList.add('button-inactive');
+                readID = idm;
+                document.getElementById('idm').innerHTML = `IDm: ${idm}`;
+                await recorder.recordID(idm);
+                const name = await recorder.getNameForId(readID);
+                document.getElementById('recordedData').innerHTML
+                    = `Time: ${formatDate(new Date())}, ID: ${readID}, Name: ${name}`;
+                document.getElementById('idName').value = name ? name : '未登録';
+                if (recorder.checkList[readID] ? recorder.checkList[readID].out : false) {
+                    exitButton.classList.remove('button-inactive');
+                } else {
+                    enterButton.classList.remove('button-inactive');
+                }
+                statusField.innerHTML = `記録済: ${readID}`;
+                statusField.classList.add('is-success');
+                statusField.classList.remove('is-warning');
+                document.getElementById('changeNameButton').classList.remove('button-inactive');
+                setTimeout(() => {
+                    updateRecordTable();
+                }, 1000);
+            } catch (error) {
+                document.getElementById('status').innerHTML = error;
+                console.error(error);
+            }
+        }
+
+        /**
+         * Start reading the IDm when the button is clicked.
+         */
+        document.getElementById('startReadingButton').addEventListener('click', async () => {
+            if (nfcReader) {
+                await stopReading();
+                return;
+            }
+            await startReading();
+        });
+
+        document.getElementById('changeNameButton').addEventListener('click', async () => {
+            const name = document.getElementById('idName').value;
+            if (name === '' || name === '未登録') {
+                return;
+            }
+            await recorder.updateName(readID, name);
+            await recorder.updateNameList();
+            await updateRecordTable();
+        });
+
+        /**
+         * Polling to read the IDm.
+         */
+        let pollingTimer;
+        const pollingInterval = 200;
+        function startPolling() {
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+            }
+            pollingTimer = setTimeout(async function poll() {
+                await readCard();
+                pollingTimer = setTimeout(poll, pollingInterval);
+            }, pollingInterval);
+        }
+    </script>
+</body>
+
+</html>
