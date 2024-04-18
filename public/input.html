@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カード読み取りシステム</title>
+    <title>カードリーダー</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <style>
         .card-read-section {
@@ -118,6 +118,9 @@
             data.apiUrl = url.searchParams.get('apiUrl');
             return data;
         })();
+        if (!config.apiUrl) {
+            alert('"apiUrl" is not set. Please set the WebAPI in the URL.');
+        }
     </script>
 
     <script type="module">
@@ -133,6 +136,9 @@
          * @returns {string} The formatted date string.
          */
         function formatDate(date) {
+            if (!date) {
+                return '';
+            }
             return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)} ${('0' + date.getHours()).slice(-2)}:${('0' + date.getMinutes()).slice(-2)}`;
         }
 

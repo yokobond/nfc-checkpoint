@@ -2,42 +2,41 @@
 <html>
 
 <head>
-    <title>入退室チェック</title>
-    <base target="_top">
+    <title>NRF Checkpoint</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
 </head>
 
 <body>
-    <div class="columns is-centered">
-        <div class="column has-text-centered">
-            <h1 class="title">青学つくまなラボ入退室チェック</h1>
-        </div>
-    </div>
-    <div class="columns is-centered">
-        <div class="column is-half">
-            <div id="last-record"></div>
-            <div class="table-container">
-                <table class="table is-bordered is-striped is-narrow is-hoverable" id="checkListTable">
-                    <thead>
-                        <tr>
-                            <th>名前</th>
-                            <th>入室</th>
-                            <th>退室</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        </tr>
-                    </tbody>
-                </table>
+    <section class="section">
+        <div class="container">
+            <div class="field">
+                <label class="label">API URL</label>
+                <div class="control">
+                    <input class="input" type="text" id="apiUrl" placeholder="Enter API URL">
+                </div>
             </div>
+
+            <a class="button is-link"
+                href="./list.html">入退室記録を開く</a>
+
+            <a class="button is-link"
+                href="./input.html">カードリーダーを開く</a>
         </div>
-    </div>
+    </section>
+
 
     <script>
+        const apiUrlInput = document.getElementById('apiUrl');
+        apiUrlInput.addEventListener('input', () => {
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                const url = new URL(`${link.href}?apiUrl=${apiUrlInput.value}`);
+                link.href = url.toString();
+            });
+        });
+        
         /**
-        * Config data
-        * @type {Object}
+        * Read the API URL from the URL and set it to the input field.
         */
         const config = (function () {
             const data = {};
@@ -45,57 +44,14 @@
             data.apiUrl = url.searchParams.get('apiUrl');
             return data;
         })();
-    </script>
-
-    <script type="module">
-        import { Recorder } from './recorder.js';
-        const recorder = new Recorder(config.apiUrl);
-
-        /**
-         * Format the given date to a string.
-         * @param {Date} date - The date to format.
-         * @returns {string} The formatted date string.
-         */
-        function formatDate(date, withDate = true) {
-            return (withDate ? `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}` : '') + ` ${('0' + date.getHours()).slice(-2)}:${('0' + date.getMinutes()).slice(-2)}`;
+        if (config.apiUrl) {
+            const apiUrlInput = document.getElementById('apiUrl');
+            apiUrlInput.value = config.apiUrl;
+            apiUrlInput.dispatchEvent(new Event('input'));
+        } else {
+            alert('"apiUrl" is not set. Please set the WebAPI in the URL.');
         }
-
-        /**
-         * Update the record table with the given data.
-         * @param {Array} data - The data to update the record table with.
-         */
-        async function updateCheckListTable() {
-            await recorder.updateRecordList();
-            const checkList = recorder.checkList;
-            document.getElementById('last-record').innerHTML = `最終記録: ${formatDate(recorder.lastRecordTime)}`;
-            const nameList = await recorder.getNameList();
-            var table = document.getElementById('checkListTable');
-            // Clear the table first
-            while (table.rows.length > 1) {
-                table.deleteRow(1);
-            }
-            // Then add new data
-            for (let id in checkList) {
-                let row = table.insertRow(-1);
-                let cell;
-                cell = row.insertCell(-1);
-                const name = nameList[id];
-                cell.innerHTML = name ? name : `ID: ${id}`;
-                cell = row.insertCell(-1);
-                cell.innerHTML = formatDate(checkList[id].in, false);
-                cell = row.insertCell(-1);
-                if (checkList[id].out) {
-                    cell.innerHTML = formatDate(checkList[id].out, false);
-                } else {
-                    cell.innerHTML = '未退室';
-                    cell.classList.add('is-danger');
-                }
-            }
-        }
-        // Update automatically
-        setInterval(updateCheckListTable, 3000);
     </script>
-
 </body>
 
 </html>
