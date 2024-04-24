@@ -225,3 +225,51 @@ function testUpdateName() {
   const lastRow = nameListSheet.getLastRow();
   nameListSheet.deleteRow(lastRow);
 }
+
+/**
+ * Moves rows from the 'Record' sheet to the 'Archive' sheet if the date in column 'A' is before the specified date.
+ *
+ * @param {Date} beforeDate - The date before which rows should be moved.
+ */
+function archiveRecords(beforeDate) {
+  if (!beforeDate) {
+    beforeDate = new Date();
+    beforeDate.setHours(0, 0, 0, 0);
+  }
+  const recordSheet = activeSpreadSheet.getSheetByName('Record');
+  const archiveSheet = activeSpreadSheet.getSheetByName('Archive');
+
+  // Get all data from the 'Record' sheet
+  const data = recordSheet.getDataRange().getValues();
+
+  // Collect rows to be moved and their indices
+  const rowsToMove = [];
+  const indicesToMove = [];
+
+  for (let i = 0; i < data.length; i++) {
+    // Parse the date from column 'A'
+    const date = new Date(data[i][0]);
+
+    // Check if the date is before the specified date
+    if (date < beforeDate) {
+      // Add the row to the list of rows to be moved
+      rowsToMove.push(data[i]);
+
+      // Add the index to the list of indices to be moved
+      indicesToMove.push(i + 1);
+    }
+  }
+
+  // Append the rows to the 'Archive' sheet
+  rowsToMove.forEach(row => archiveSheet.appendRow(row));
+
+  // Delete the rows from the 'Record' sheet in reverse order
+  indicesToMove.reverse().forEach(index => recordSheet.deleteRow(index));
+}
+
+/**
+ * Test of archiveRecords
+ */
+function testArchiveRecords() {
+  archiveRecords();
+}
