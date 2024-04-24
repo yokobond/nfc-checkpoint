@@ -1,3 +1,9 @@
+/**
+ * This is a library for reading the IDm of a FeliCa card using a Pasori device.
+ * This code refers to the following repository.
+ * con3code/pasorich: Scratch 3.0 extension. Read SmartCard's IDm with PaSoRi. https://github.com/con3code/pasorich
+ */
+
 const pasoriDevice = {
   443: {
     vendorId: 0x054c,
