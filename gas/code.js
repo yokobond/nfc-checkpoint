@@ -2,6 +2,26 @@
 const activeSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
 
 /**
+ * Creates a new sheet with the specified name in the active spreadsheet if it does not already exist.
+ *
+ * @param {string} sheetName - The name of the sheet to be created.
+ */
+function createSheetIfNotExists(sheetName) {
+  var sheet = activeSpreadSheet.getSheetByName(sheetName);
+
+  // Check if the sheet does not exist
+  if (!sheet) {
+    // Create the sheet
+    activeSpreadSheet.insertSheet(sheetName);
+  }
+}
+
+createSheetIfNotExists('Record');
+createSheetIfNotExists('NameList');
+createSheetIfNotExists('Archive');
+createSheetIfNotExists('log');
+
+/**
  * Convert epoch time to date time entry
  * @param {number} epochTime
  * @returns {string}
