@@ -214,18 +214,18 @@ function updateName(id, newName) {
     if (nameList[i][0] == id) {
       const cell = nameListSheet.getRange(i + 1, nameColumn);
       cell.setValue(newName);
-      return {id: id, name: newName};
+      return { id: id, name: newName };
     }
   }
   nameListSheet.appendRow([id, newName]);
-  return {id: id, name: newName};
+  return { id: id, name: newName };
 }
 
 /**
  * Test updateName
  */
 function testUpdateName() {
-  const addData = {id: 'id_xxx_1', name: 'added'};
+  const addData = { id: 'id_xxx_1', name: 'added' };
   let result = updateName(addData.id, addData.name);
   const nameListSheet = activeSpreadSheet.getSheetByName('NameList');
   let nameList = nameListSheet.getDataRange().getValues();
@@ -234,7 +234,7 @@ function testUpdateName() {
     console.error(result);
     return;
   }
-  const updateData = {id: 'id_xxx_1', name: 'updated'};
+  const updateData = { id: 'id_xxx_1', name: 'updated' };
   result = updateName(updateData.id, updateData.name);
   nameList = nameListSheet.getDataRange().getValues();
   const updated = nameList[nameList.length - 1];
