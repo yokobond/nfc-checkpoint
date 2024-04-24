@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "clasp:login": "clasp login",
+    "clasp:login-dev": "login.sh dev",
+    "clasp:login-prod": "login.sh prod",
     "clasp:logout": "clasp logout",
     "clasp:pull": "clasp pull",
     "clasp:push": "clasp push",
