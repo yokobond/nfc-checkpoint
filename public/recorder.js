@@ -28,7 +28,6 @@ class Recorder {
 
   async updateRecordList() {
     const afterTimestamp = this.recordListUpdatedTime.valueOf();
-    this.recordListUpdatedTime = new Date();
     try {
       const response = await fetch(
         `${this.endpoint}?action=getRecordList&after=${afterTimestamp}`,
@@ -45,13 +44,12 @@ class Recorder {
           }
         });
         if (newRecords.length > 0) {
-          this.recordList = this.recordList.concat(newRecords);
+          this.recordList =newRecords;
         }
       }
       this.updateCheckList();
       return this.recordList;
     } catch (e) {
-      this.recordListUpdatedTime = new Date(afterTimestamp);
       console.error(e);
       throw e;
     }
