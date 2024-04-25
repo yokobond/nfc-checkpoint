@@ -56,8 +56,8 @@ function doGet(e) {
   switch (reqParam.action) {//actionパラメーターの内容によって処理を分岐
     case "getRecordList":
       {
-        const after = parseInt(reqParam.after);
-        const data = getRecordList(after);
+        const after = reqParam.after;
+        const data = getRecordList(after ? parseInt(after) : null);
         return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
       }
     case "getNameList":
