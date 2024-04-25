@@ -3,8 +3,8 @@ class Recorder {
     this.endpoint = endpoint;
     this.nameList = null;
     this.recordList = [];
-    this.recordListUpdatedTime = new Date();
-    this.recordListUpdatedTime.setHours(0, 0, 0, 0); // start of the day
+    this.todayStart = new Date();
+    this.todayStart.setHours(0, 0, 0, 0); // start of the day
     this.lastRecordTime = null;
     this.checkList = {};
   }
@@ -27,25 +27,27 @@ class Recorder {
   }
 
   async updateRecordList() {
-    const afterTimestamp = this.recordListUpdatedTime.valueOf();
     try {
       const response = await fetch(
-        `${this.endpoint}?action=getRecordList&after=${afterTimestamp}`,
+        // `${this.endpoint}?action=getRecordList&after=${afterTimestamp}`,
+        `${this.endpoint}?action=getRecordList`,
       );
       if (response.ok) {
         const newRecords = await response.json();
+        const todaysRecords = [];
         newRecords.forEach((entry) => {
           const recordTime = new Date(entry[0]);
-          if (
-            this.lastRecordTime === null
-            || recordTime > this.lastRecordTime
-          ) {
-            this.lastRecordTime = recordTime;
+          if (recordTime > this.todayStart) {
+            todaysRecords.push(entry);
+            if (
+              this.lastRecordTime === null
+              || recordTime > this.lastRecordTime
+            ) {
+              this.lastRecordTime = recordTime;
+            }
           }
         });
-        if (newRecords.length > 0) {
-          this.recordList =newRecords;
-        }
+        this.recordList =todaysRecords;
       }
       this.updateCheckList();
       return this.recordList;
