@@ -10,9 +10,9 @@
     <section class="section">
         <div class="container">
             <div class="field">
-                <label class="label">API URL</label>
+                <label class="label">API Key</label>
                 <div class="control">
-                    <input class="input" type="text" id="apiUrl" placeholder="Enter API URL">
+                    <input class="input" type="text" id="apiKey" placeholder="Enter API Key ('Deployment ID' of the Google Apps Script)">
                 </div>
             </div>
 
@@ -26,11 +26,11 @@
 
 
     <script>
-        const apiUrlInput = document.getElementById('apiUrl');
+        const apiUrlInput = document.getElementById('apiKey');
         apiUrlInput.addEventListener('input', () => {
             const links = document.querySelectorAll('a');
             links.forEach(link => {
-                const url = new URL(`${link.href}?apiUrl=${apiUrlInput.value}`);
+                const url = new URL(`${link.href}?apiKey=${apiUrlInput.value}`);
                 link.href = url.toString();
             });
         });
@@ -41,15 +41,15 @@
         const config = (function () {
             const data = {};
             const url = new URL(window.location.href);
-            data.apiUrl = url.searchParams.get('apiUrl');
+            data.apiKey = url.searchParams.get('apiKey');
             return data;
         })();
-        if (config.apiUrl) {
-            const apiUrlInput = document.getElementById('apiUrl');
-            apiUrlInput.value = config.apiUrl;
+        if (config.apiKey) {
+            const apiUrlInput = document.getElementById('apiKey');
+            apiUrlInput.value = config.apiKey;
             apiUrlInput.dispatchEvent(new Event('input'));
         } else {
-            alert('"apiUrl" is not set. Please set the WebAPI in the URL.');
+            alert('"apiKey" is not set. Please set the "Deployment ID" of the Google Apps Script as "apiKey".');
         }
     </script>
 </body>

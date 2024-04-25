@@ -42,17 +42,17 @@
         const config = (function () {
             const data = {};
             const url = new URL(window.location.href);
-            data.apiUrl = url.searchParams.get('apiUrl');
+            data.apiKey = url.searchParams.get('apiKey');
             return data;
         })();
-        if (!config.apiUrl) {
-            alert('"apiUrl" is not set. Please set the WebAPI in the URL.');
+        if (!config.apiKey) {
+            alert('"apiKey" is not set. Please set the "Deployment ID" of the Google Apps Script as "apiKey".');
         }
     </script>
 
     <script type="module">
         import { Recorder } from './recorder.js';
-        const recorder = new Recorder(config.apiUrl);
+        const recorder = new Recorder(`https://script.google.com/macros/s/${config.apiKey}/exec`);
 
         /**
          * Format the given date to a string.
