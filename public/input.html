@@ -41,6 +41,7 @@
                         <input id="idName" class="input is-medium" type="text" placeholder="name" />
                     </p>
                     <button class="button is-primary is-medium button-inactive" id="changeNameButton">名前変更</button>
+                    <button class="button is-danger is-medium button-inactive" id="clearButton">クリア</button>
                 </div>
                 <div class="card-read-instructions">
                     <button class="button is-primary is-large button-inactive" id="enter">入室</button>
@@ -55,6 +56,29 @@
                 </div>
             </div>
         </div>
+    </section>
+
+    <section class="section">
+        <div class="columns is-centered">
+            <div class="column is-half">
+                <div id="last-record"></div>
+                <div class="table-container">
+                    <table class="table is-bordered is-striped is-narrow is-hoverable" id="checkListTable">
+                        <thead>
+                            <tr>
+                                <th>名前</th>
+                                <th>入室</th>
+                                <th>退室</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>    
     </section>
 
     <section class="section">
@@ -221,11 +245,13 @@
                 const statusField = document.getElementById('status');
                 const enterButton = document.getElementById('enter');
                 const exitButton = document.getElementById('exit');
+                const clearButton = document.getElementById('clearButton');
                 statusField.innerHTML = `記録中: ${idm}`;
                 statusField.classList.add('is-warning');
                 statusField.classList.remove('is-success');
                 enterButton.classList.add('button-inactive');
                 exitButton.classList.add('button-inactive');
+                clearButton.classList.remove('button-inactive');
                 readID = idm;
                 document.getElementById('idm').innerHTML = `IDm: ${idm}`;
                 await recorder.recordID(idm);
@@ -286,6 +312,56 @@
                 pollingTimer = setTimeout(poll, pollingInterval);
             }, pollingInterval);
         }
+
+        document.getElementById('clearButton').addEventListener('click', async () => {
+            readID = null;
+            const statusField = document.getElementById('status');
+            const enterButton = document.getElementById('enter');
+            const exitButton = document.getElementById('exit');
+            statusField.innerHTML = '読み込み中...';
+            statusField.classList.remove('is-warning');
+            statusField.classList.add('is-success');
+            enterButton.classList.add('button-inactive');
+            exitButton.classList.add('button-inactive');
+            document.getElementById('idName').value = '';
+            document.getElementById('idm').innerHTML = '';
+            document.getElementById('recordedData').innerHTML = '';
+        });
+
+        /**
+         * Update the record table with the given data.
+         * @param {Array} data - The data to update the record table with.
+         */
+         async function updateCheckListTable() {
+            await recorder.updateRecordList();
+            const checkList = recorder.checkList;
+            document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
+            const nameList = await recorder.getNameList();
+            var table = document.getElementById('checkListTable');
+            // Clear the table first
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            // Then add new data
+            for (let id in checkList) {
+                let row = table.insertRow(-1);
+                let cell;
+                cell = row.insertCell(-1);
+                const name = nameList[id];
+                cell.innerHTML = name ? name : `ID: ${id}`;
+                cell = row.insertCell(-1);
+                cell.innerHTML = formatDate(checkList[id].in, false);
+                cell = row.insertCell(-1);
+                if (checkList[id].out) {
+                    cell.innerHTML = formatDate(checkList[id].out, false);
+                } else {
+                    cell.innerHTML = '未退室';
+                    cell.classList.add('is-danger');
+                }
+            }
+        }
+        // Update automatically
+        setInterval(updateCheckListTable, 10000);
     </script>
 </body>
 
