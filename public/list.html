@@ -20,6 +20,7 @@
                 <table class="table is-bordered is-striped is-narrow is-hoverable" id="checkListTable">
                     <thead>
                         <tr>
+                            <th>記録順</th>
                             <th>名前</th>
                             <th>入室</th>
                             <th>退室</th>
@@ -81,9 +82,14 @@
                 table.deleteRow(1);
             }
             // Then add new data
+            let recordNumber = 0;
             for (let id in checkList) {
+                recordNumber++;
                 let row = table.insertRow(-1);
                 let cell;
+                cell = row.insertCell(-1);
+                cell.style.textAlign = "right";
+                cell.innerHTML = recordNumber;
                 cell = row.insertCell(-1);
                 const name = nameList[id];
                 cell.innerHTML = name ? name : `ID: ${id}`;
