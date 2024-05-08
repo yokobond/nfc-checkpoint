@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-const activeSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+
+const ss = SpreadsheetApp.openById("REPLACE_SPREAD_SHEET_ID");
 
 /**
  * Creates a new sheet with the specified name in the active spreadsheet if it does not already exist.
@@ -7,12 +8,12 @@ const activeSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
  * @param {string} sheetName - The name of the sheet to be created.
  */
 function createSheetIfNotExists(sheetName) {
-  var sheet = activeSpreadSheet.getSheetByName(sheetName);
+  var sheet = ss.getSheetByName(sheetName);
 
   // Check if the sheet does not exist
   if (!sheet) {
     // Create the sheet
-    activeSpreadSheet.insertSheet(sheetName);
+    ss.insertSheet(sheetName);
   }
 }
 
@@ -40,7 +41,7 @@ function toDateTimeEntry(epochTime) {
  * @param {any} data
  */
 function sheetLog(data) {
-  const dataSheet = activeSpreadSheet.getSheetByName('log');
+  const dataSheet = ss.getSheetByName('log');
   dataSheet.appendRow([toDateTimeEntry(Date.now()), JSON.stringify(data)]);
 }
 
@@ -128,7 +129,7 @@ function testDoPost() {
 }
 
 function getRecordList(after) {
-  const recordSheet = activeSpreadSheet.getSheetByName('Record');
+  const recordSheet = ss.getSheetByName('Record');
   const records = recordSheet.getDataRange().getValues();
   if (after) {
     const afterDate = new Date(after);
@@ -154,7 +155,7 @@ function testGetRecordList() {
   const result = getRecordList(after.valueOf());
   if (result.length !== 2) console.error(result);
   if (result[0][1] !== 'test1') console.error(result);
-  const recordSheet = activeSpreadSheet.getSheetByName('Record');
+  const recordSheet = ss.getSheetByName('Record');
   const lastRow = recordSheet.getLastRow();
   recordSheet.deleteRow(lastRow);
   recordSheet.deleteRow(lastRow - 1);
@@ -166,7 +167,7 @@ function testGetRecordList() {
  * @returns {Array<Array<string>>} array of id and name
  */
 function getNameList() {
-  const nameListSheet = activeSpreadSheet.getSheetByName('NameList');
+  const nameListSheet = ss.getSheetByName('NameList');
   const nameList = nameListSheet.getDataRange().getValues();
   return nameList;
 }
@@ -178,7 +179,7 @@ function getNameList() {
  */
 function addRecord(record) {
   const recordedData = [toDateTimeEntry(Date.now()), ...record];
-  const recordSheet = activeSpreadSheet.getSheetByName('Record');
+  const recordSheet = ss.getSheetByName('Record');
   recordSheet.appendRow(recordedData);
   return recordedData;
 }
@@ -189,7 +190,7 @@ function addRecord(record) {
 function testAddRecord() {
   const testRecord = ['ID_xxxx'];
   addRecord(testRecord);
-  const recordSheet = activeSpreadSheet.getSheetByName('Record');
+  const recordSheet = ss.getSheetByName('Record');
   const records = recordSheet.getDataRange().getValues();
   const last = records[records.length - 1];
   if (last[1] !== testRecord[0]) {
@@ -208,7 +209,7 @@ function testAddRecord() {
  */
 function updateName(id, newName) {
   const nameColumn = 2;
-  const nameListSheet = activeSpreadSheet.getSheetByName('NameList');
+  const nameListSheet = ss.getSheetByName('NameList');
   const nameList = nameListSheet.getDataRange().getValues();
   for (let i = 0; i < nameList.length; i++) {
     if (nameList[i][0] == id) {
@@ -227,7 +228,7 @@ function updateName(id, newName) {
 function testUpdateName() {
   const addData = { id: 'id_xxx_1', name: 'added' };
   let result = updateName(addData.id, addData.name);
-  const nameListSheet = activeSpreadSheet.getSheetByName('NameList');
+  const nameListSheet = ss.getSheetByName('NameList');
   let nameList = nameListSheet.getDataRange().getValues();
   const added = nameList[nameList.length - 1];
   if (added[0] !== addData.id || added[1] !== addData.name) {
@@ -256,8 +257,8 @@ function archiveRecords(beforeDate) {
     beforeDate = new Date();
     beforeDate.setHours(0, 0, 0, 0);
   }
-  const recordSheet = activeSpreadSheet.getSheetByName('Record');
-  const archiveSheet = activeSpreadSheet.getSheetByName('Archive');
+  const recordSheet = ss.getSheetByName('Record');
+  const archiveSheet = ss.getSheetByName('Archive');
 
   // Get all data from the 'Record' sheet
   const data = recordSheet.getDataRange().getValues();
