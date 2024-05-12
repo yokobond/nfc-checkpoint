@@ -80,7 +80,7 @@
                     </table>
                 </div>
             </div>
-        </div>    
+        </div>
     </section>
 
     <section class="section">
@@ -146,7 +146,9 @@
         const recorder = new Recorder(`https://script.google.com/macros/s/${config.apiKey}/exec`);
 
         const readSuccessSound = new Audio();
-        readSuccessSound.src = './read-success.wav';
+        readSuccessSound.src = './read-card-success.wav';
+        const changeNameSuccessSound = new Audio();
+        changeNameSuccessSound.src = './change-name-success.mp3';
 
         /**
          * Format the given date to a string.
@@ -249,8 +251,9 @@
                 const exitButton = document.getElementById('exit');
                 const clearButton = document.getElementById('clearButton');
                 statusField.innerHTML = `記録中: ${idm}`;
-                statusField.classList.add('is-warning');
                 statusField.classList.remove('is-success');
+                statusField.classList.remove('is-danger');
+                statusField.classList.add('is-warning');
                 enterButton.classList.add('button-inactive');
                 exitButton.classList.add('button-inactive');
                 clearButton.classList.remove('button-inactive');
@@ -267,8 +270,8 @@
                     enterButton.classList.remove('button-inactive');
                 }
                 statusField.innerHTML = `記録済: ${readID}`;
-                statusField.classList.add('is-success');
                 statusField.classList.remove('is-warning');
+                statusField.classList.add('is-success');
                 document.getElementById('changeNameButton').classList.remove('button-inactive');
                 setTimeout(() => {
                     updateRecordTable();
@@ -295,9 +298,21 @@
             if (name === '' || name === '未登録') {
                 return;
             }
-            await recorder.updateName(readID, name);
-            await recorder.updateNameList();
-            await updateRecordTable();
+            const statusField = document.getElementById('status');
+            try {
+                await recorder.updateName(readID, name);
+                statusField.classList.remove('is-warning');
+                statusField.classList.remove('is-danger');
+                statusField.classList.add('is-success');
+                statusField.innerHTML = `名前変更: ${name}`;
+                changeNameSuccessSound.play();
+                await recorder.updateNameList();
+                await updateRecordTable();
+            } catch (error) {
+                statusField.classList.remove('is-success');
+                statusField.classList.add('is-danger');
+                statusField.innerHTML = error;
+            }
         });
 
         /**
@@ -322,6 +337,7 @@
             const exitButton = document.getElementById('exit');
             statusField.innerHTML = '読み込み中...';
             statusField.classList.remove('is-warning');
+            statusField.classList.remove('is-danger');
             statusField.classList.add('is-success');
             enterButton.classList.add('button-inactive');
             exitButton.classList.add('button-inactive');
@@ -334,7 +350,7 @@
          * Update the record table with the given data.
          * @param {Array} data - The data to update the record table with.
          */
-         async function updateCheckListTable() {
+        async function updateCheckListTable() {
             await recorder.updateRecordList();
             const checkList = recorder.checkList;
             document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
