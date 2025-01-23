@@ -14,7 +14,7 @@ This is a checkpoint service using NFC tags and Google Apps Script. The service 
 2. Navigate into the project directory: `cd <repository-name>`
 3. Install the dependencies: `npm install`
 4. Login to clasp: `clasp login`
-5. Create clasp project with *sheets*: `clasps create`
+5. Create clasp project with *sheets*: `clasp create --type sheets`
 6. Modify property of the `.clasp.json` to ` "rootDir":"./gas"`
 7. Push the local code to the Apps Script project with manifest overwriting: `clasp:push`
 8. Open the Apps Script project in the browser: `clasp open`
