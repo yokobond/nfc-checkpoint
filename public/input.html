@@ -294,6 +294,7 @@
         });
 
         document.getElementById('changeNameButton').addEventListener('click', async () => {
+            console.log("changeName");
             const name = document.getElementById('idName').value;
             if (name === '' || name === '未登録') {
                 return;
@@ -351,6 +352,7 @@
          * @param {Array} data - The data to update the record table with.
          */
         async function updateCheckListTable() {
+            console.log("updateCheckListTable");
             await recorder.updateRecordList();
             const checkList = recorder.checkList;
             document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
