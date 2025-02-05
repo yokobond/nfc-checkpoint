@@ -259,6 +259,11 @@
                 clearButton.classList.remove('button-inactive');
                 readID = idm;
                 document.getElementById('idm').innerHTML = `IDm: ${idm}`;
+
+                recorder.recordList.push([(new Date()).toISOString(), idm]);
+                recorder.updateCheckList();
+                updateCheckListTable(false);
+
                 await recorder.recordID(idm);
                 const name = await recorder.getNameForId(readID);
                 document.getElementById('recordedData').innerHTML
@@ -273,9 +278,6 @@
                 statusField.classList.remove('is-warning');
                 statusField.classList.add('is-success');
                 document.getElementById('changeNameButton').classList.remove('button-inactive');
-                setTimeout(() => {
-                    updateRecordTable();
-                }, 1000);
             } catch (error) {
                 document.getElementById('status').innerHTML = error;
                 console.error(error);
@@ -350,8 +352,12 @@
          * Update the record table with the given data.
          * @param {Array} data - The data to update the record table with.
          */
-        async function updateCheckListTable() {
-            await recorder.updateRecordList();
+        async function updateCheckListTable(shouldWaitForRecordListUpdate = true) {
+            if (shouldWaitForRecordListUpdate) {
+                await recorder.updateRecordList();
+            } else {
+                recorder.updateRecordList();
+            }
             const checkList = recorder.checkList;
             document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
             const nameList = await recorder.getNameList();
