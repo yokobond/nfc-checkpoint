@@ -259,6 +259,11 @@
                 clearButton.classList.remove('button-inactive');
                 readID = idm;
                 document.getElementById('idm').innerHTML = `IDm: ${idm}`;
+
+                recorder.recordList.push([(new Date()).toISOString(), idm]);
+                recorder.updateCheckList();
+                updateCheckListTable(false);
+
                 await recorder.recordID(idm);
                 const name = await recorder.getNameForId(readID);
                 document.getElementById('recordedData').innerHTML
@@ -273,9 +278,6 @@
                 statusField.classList.remove('is-warning');
                 statusField.classList.add('is-success');
                 document.getElementById('changeNameButton').classList.remove('button-inactive');
-                setTimeout(() => {
-                    updateRecordTable();
-                }, 1000);
             } catch (error) {
                 document.getElementById('status').innerHTML = error;
                 console.error(error);
@@ -346,36 +348,53 @@
             document.getElementById('recordedData').innerHTML = '';
         });
 
+        let isUpdatingCheckList = false; // ロックフラグを追加
+
         /**
          * Update the record table with the given data.
          * @param {Array} data - The data to update the record table with.
          */
-        async function updateCheckListTable() {
-            await recorder.updateRecordList();
-            const checkList = recorder.checkList;
-            document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
-            const nameList = await recorder.getNameList();
-            var table = document.getElementById('checkListTable');
-            // Clear the table first
-            while (table.rows.length > 1) {
-                table.deleteRow(1);
+        async function updateCheckListTable(shouldWaitForRecordListUpdate = true) {
+            // 既に実行中の場合は終了
+            if (isUpdatingCheckList) {
+                return;
             }
-            // Then add new data
-            for (let id in checkList) {
-                let row = table.insertRow(-1);
-                let cell;
-                cell = row.insertCell(-1);
-                const name = nameList[id];
-                cell.innerHTML = name ? name : `ID: ${id}`;
-                cell = row.insertCell(-1);
-                cell.innerHTML = formatDate(checkList[id].in, false);
-                cell = row.insertCell(-1);
-                if (checkList[id].out) {
-                    cell.innerHTML = formatDate(checkList[id].out, false);
+
+            try {
+                isUpdatingCheckList = true; // ロックを取得
+
+                if (shouldWaitForRecordListUpdate) {
+                    await recorder.updateRecordList();
                 } else {
-                    cell.innerHTML = '未退室';
-                    cell.classList.add('is-danger');
+                    recorder.updateRecordList();
                 }
+                const checkList = recorder.checkList;
+                document.getElementById('last-record').innerHTML = `最終記録: ${recorder.lastRecordTime ? formatDate(recorder.lastRecordTime) : '未記録'}`;
+                const nameList = await recorder.getNameList();
+                var table = document.getElementById('checkListTable');
+                // Clear the table first
+                while (table.rows.length > 1) {
+                    table.deleteRow(1);
+                }
+                // Then add new data
+                for (let id in checkList) {
+                    let row = table.insertRow(-1);
+                    let cell;
+                    cell = row.insertCell(-1);
+                    const name = nameList[id];
+                    cell.innerHTML = name ? name : `ID: ${id}`;
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = formatDate(checkList[id].in, false);
+                    cell = row.insertCell(-1);
+                    if (checkList[id].out) {
+                        cell.innerHTML = formatDate(checkList[id].out, false);
+                    } else {
+                        cell.innerHTML = '未退室';
+                        cell.classList.add('is-danger');
+                    }
+                }
+            } finally {
+                isUpdatingCheckList = false; // 必ずロックを解放
             }
         }
         // Update automatically
